@@ -1,3 +1,5 @@
+# ABSTRACT: System for managing a media library
+# PODNAME: Curator
 
 =head1 NAME
 
