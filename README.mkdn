@@ -1,0 +1,28 @@
+# NAME
+
+Curator - System for managing a media library
+
+# VERSION
+
+version 0.001
+
+# SYNOPSIS
+
+# DESCRIPTION
+
+# NAME
+
+Curator
+
+# METHODS
+
+# AUTHOR
+
+Doug Bell <preaction@cpan.org>
+
+# COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2013 by Doug Bell.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
