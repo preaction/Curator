@@ -1,0 +1,5 @@
+.DS_Store
+.build
+*.swp
+*.tar.gz
+Curator-*
