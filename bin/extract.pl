@@ -13,10 +13,29 @@ use feature 'say';
 $|++;
 
 my %formats = (
-    rar     => [ qr/[.]cbr$/, qr/[.]part0*1[.]rar$/, qr/(?:(?<![.]part\d\d\d)|(?<![.]part\d\d))[.]rar$/, ],
-    zip     => [ qr/[.]cbz$/, qr/[.]zip$/, ],
-    pdf     => [ qw/[.]pdf$/, ],
-    epub    => [ qw/[.]epub$/, ],
+    rar     => sub {
+        my ( $file ) = @_;
+        return 1 if $file =~ /[.]cbr$/;
+        return 1 if $file =~ /[.]part0*1[.]rar$/;
+        return 1 if $file =~ /[.]rar$/ && $file !~ /[.]part\d+[.]rar$/;
+        return;
+    },
+    zip     => sub {
+        my ( $file ) = @_;
+        return 1 if $file =~ /[.]cbz$/;
+        return 1 if $file =~ /[.]zip$/;
+        return;
+    },
+    pdf     => sub {
+        my ( $file ) = @_;
+        return 1 if $file =~ /[.]pdf$/;
+        return;
+    },
+    epub    => sub {
+        my ( $file ) = @_;
+        return 1 if $file =~ /[.]epub$/;
+        return;
+    },
 );
 my %extract = (
     rar     => \&extract_rar,
@@ -36,10 +55,8 @@ find(
         wanted => sub {
             my $file = $_;
             for my $format ( keys %formats ) {
-                for my $test ( @{ $formats{ $format } } ) {
-                    if ( $file =~ $test ) {
-                        $extract{$format}->( $File::Find::name, $destination );
-                    }
+                if ( $formats{ $format }->( $file ) ) {
+                    $extract{$format}->( $File::Find::name, $destination );
                 }
             }
         },
