@@ -164,7 +164,7 @@ sub rip_dvd {
         # -N eng -- Native language
         # --native-dub -- Use native language for audio, not subtitles
         # --subtitle scan -- Find subtitles used for less than 10% of the time
-        system 'nice', $HANDBRAKE, '-v9', '--preset', $HB_PRESET, '-5', '-F', '-N', 'eng', 
+        system 'nice', $HANDBRAKE, '--preset', $HB_PRESET, '-5', '-F', '-N', 'eng', 
                 '--native-dub', '--subtitle', 'scan',
                 '-i', $in_file, '-t', $title_number, '-o', $out_file;
 
@@ -187,8 +187,8 @@ sub rip_file {
     # -N eng -- Native language
     # --native-dub -- Use native language for audio, not subtitles
     # --subtitle scan -- Find subtitles used for less than 10% of the time
-    system 'nice', $HANDBRAKE, '-v9', '--preset', $HB_PRESET, '-5', '-F', '-N', 'eng', 
-            '--native-dub', '--subtitle', '1', '-i', $in_file, '-o', $out_file;
+    system 'nice', $HANDBRAKE, '--preset', $HB_PRESET, '-5', '-F', '-N', 'eng', 
+            '--native-dub', '--subtitle', 'scan', '-i', $in_file, '-o', $out_file;
 
     # XXX: Check for failure
 }
