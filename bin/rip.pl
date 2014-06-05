@@ -178,8 +178,12 @@ sub rip_file {
     wait_for_handbrake;
     print_log "Making $folder/$in_file... ";
 
+    # Remove the original format extension
+    my $out_fn = $in_file;
+    $out_fn =~ s/[.][^.]+$//;
+
     `mkdir -p "$ENCODE_FOLDER/$folder"`;
-    my $out_file = find_unique_name( "$ENCODE_FOLDER/$folder/${in_file}", $OUTPUT_FORMAT );
+    my $out_file = find_unique_name( "$ENCODE_FOLDER/$folder/${out_fn}", $OUTPUT_FORMAT );
 
     # Run HandBrakeCLI
     # -5 -- Decomb if necessary
