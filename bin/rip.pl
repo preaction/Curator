@@ -42,15 +42,10 @@ my $max_depth = $dvd ? 1 : 4;
 # Looking for VIDEO_TS and .avi, .mkv, .mov, .ogg
 find({ 
     preprocess => sub {
-        my $cwd = $File::Find::dir;
-        for my $dir ( @dirs ) {
-            if ( $cwd =~ /^\Q$dir/ ) {
-                $dir =~ s/\Q$dir//;
-                my $depth = $dir =~ tr[/][];
-                return @_ if $depth <= $max_depth;
-                return;
-            }
-        }
+        my $cwd = find_rel_dir( $File::Find::dir );
+        my $depth = $cwd =~ tr[/][];
+        return @_ if $depth <= $max_depth;
+        return;
     },
     wanted => sub {
         my $file = $_;
@@ -59,7 +54,8 @@ find({
                 rip_dvd( $file, $file );
             }
             elsif ( !$dvd ) {
-                rip_file( $file, basename( $File::Find::dir ) );
+                my $dir = find_rel_dir( $File::Find::dir );
+                rip_file( $file, $dir );
             }
             if ( -d "$file/VIDEO_TS" ) {
                 print_log "Done, ejecting volume";
@@ -68,6 +64,16 @@ find({
         }
     },
 }, @dirs );
+
+sub find_rel_dir {
+    my ( $path ) = @_;
+    for my $dir ( @dirs ) {
+        if ( $path =~ /^\Q$dir/ ) {
+            $path =~ s/\Q$dir//;
+            return $path;
+        }
+    }
+}
 
 sub wait_for_handbrake {
     while ( 1 ) {
