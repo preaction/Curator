@@ -42,7 +42,7 @@ sub print_log(@) {
 find( sub {
     my $file = $_;
     if ( $file =~ /[.](mp4|avi|mkv|mov|ogg|mpg|m?ts|iso)$/i or -d "$file/VIDEO_TS" ) {
-        if ( -d "$file/VIDEO_TS" || $file =~ /[.]iso$/ ) {
+        if ( -d "$file/VIDEO_TS" || $file =~ /[.]iso$/i ) {
             rip_dvd( $file, $file );
         }
         elsif ( !$dvd ) {
