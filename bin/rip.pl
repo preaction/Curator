@@ -38,21 +38,35 @@ sub print_log(@) {
 	print $LOG_FILE scalar( localtime ), " - $$ - ", @_, "\n";
 }
 
+my $max_depth = $dvd ? 1 : 4;
 # Looking for VIDEO_TS and .avi, .mkv, .mov, .ogg
-find( sub {
-    my $file = $_;
-    if ( $file =~ /[.](mp4|avi|mkv|mov|ogg|mpg|m?ts|iso)$/i or -d "$file/VIDEO_TS" ) {
-        if ( -d "$file/VIDEO_TS" || $file =~ /[.]iso$/i ) {
-            rip_dvd( $file, $file );
+find({ 
+    preprocess => sub {
+        my $cwd = $File::Find::dir;
+        for my $dir ( @dirs ) {
+            if ( $cwd =~ /^\Q$dir/ ) {
+                $dir =~ s/\Q$dir//;
+                my $depth = $dir =~ tr[/][];
+                return @_ if $depth <= $max_depth;
+                return;
+            }
         }
-        elsif ( !$dvd ) {
-            rip_file( $file, basename( $File::Find::dir ) );
+    },
+    wanted => sub {
+        my $file = $_;
+        if ( $file =~ /[.](mp4|avi|mkv|mov|ogg|mpg|m?ts|iso)$/i or -d "$file/VIDEO_TS" ) {
+            if ( -d "$file/VIDEO_TS" || $file =~ /[.]iso$/i ) {
+                rip_dvd( $file, $file );
+            }
+            elsif ( !$dvd ) {
+                rip_file( $file, basename( $File::Find::dir ) );
+            }
+            if ( -d "$file/VIDEO_TS" ) {
+                print_log "Done, ejecting volume";
+                `diskutil eject "$File::Find::name"`;
+            }
         }
-        if ( -d "$file/VIDEO_TS" ) {
-            print_log "Done, ejecting volume";
-            `diskutil eject "$File::Find::name"`;
-        }
-    }
+    },
 }, @dirs );
 
 sub wait_for_handbrake {
