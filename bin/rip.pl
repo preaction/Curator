@@ -51,7 +51,7 @@ find({
         my $file = $_;
         if ( $file =~ /[.](mp4|avi|mkv|mov|ogg|mpg|m?ts|iso)$/i or -d "$file/VIDEO_TS" ) {
             if ( -d "$file/VIDEO_TS" || $file =~ /[.]iso$/i ) {
-                rip_dvd( $file, $file );
+                rip_dvd( $file, find_rel_dir( $File::Find::dir ) );
             }
             elsif ( !$dvd ) {
                 my $dir = find_rel_dir( $File::Find::dir );
@@ -102,7 +102,7 @@ sub find_unique_name {
 }
 
 sub rip_dvd {
-    my ( $in_file, $volume ) = @_;
+    my ( $in_file, $dir ) = @_;
     my $canon_path;
     if ( -f $in_file ) {
         $canon_path = $in_file;
@@ -173,10 +173,10 @@ sub rip_dvd {
     for my $title_number ( @titles_to_rip ) {
         wait_for_handbrake;
 
-        print_log "Making $volume title $title_number... ";
+        print_log "Making $in_file title $title_number... ";
 
-        `mkdir -p "$ENCODE_FOLDER/$volume"`;
-        my $out_file = find_unique_name( "$ENCODE_FOLDER/$volume/${title_number}", ${OUTPUT_FORMAT} );
+        `mkdir -p "$ENCODE_FOLDER/$dir"`;
+        my $out_file = find_unique_name( "$ENCODE_FOLDER/$dir/${title_number}", ${OUTPUT_FORMAT} );
 
         # Run HandBrakeCLI
         # -5 -- Decomb if necessary
