@@ -56,7 +56,8 @@ find(
             my $file = $_;
             for my $format ( keys %formats ) {
                 if ( $formats{ $format }->( $file ) ) {
-                    $extract{$format}->( $File::Find::name, $destination );
+                    my $rel_path = find_rel_dir( $File::Find::dir );
+                    $extract{$format}->( $File::Find::name, catdir( $destination, $rel_path ) );
                 }
             }
         },
@@ -65,10 +66,21 @@ find(
     @sources,
 );
 
+sub find_rel_dir {
+    my ( $path ) = @_;
+    for my $dir ( @sources ) {
+        if ( $path =~ /^\Q$dir/ ) {
+            $path =~ s/\Q$dir//;
+            return $path;
+        }
+    }
+}
+
 sub extract_rar {
     my ( $file, $destination ) = @_;
     my $cwd = getcwd;
     my $path = ( $file =~ m{^/} ? $file : abs_path( $file ) );
+    system 'mkdir', '-p', $destination;
     chdir $destination;
     say "RAR: Extracting $path to $destination";
     capture { system 'unrar', 'e', '-ad', $path } and say "--- FAILED: $!";
@@ -81,9 +93,7 @@ sub extract_pdf {
     my $path = ( $file =~ m{^/} ? $file : abs_path( $file ) );
     my $dest_file = basename( $file ) . ".jpg";
     $destination = catdir( $destination, basename( $file ) );
-    if ( !-d $destination ) {
-        mkdir $destination;
-    }
+    system 'mkdir', '-p', $destination;
     chdir $destination;
     say "PDF: Extracting $path to $destination";
     my @limits = qw( -limit disk 90GB -limit thread 4 );
@@ -97,7 +107,7 @@ sub extract_zip {
     my $zip = Archive::Zip->new;
     $zip->read( $file );
     $destination = catdir( $destination, basename( $file ) );
-    mkdir $destination if !-d $destination;
+    system 'mkdir', '-p', $destination;
     $zip->extractTree( "", $destination . '/' );
 }
 
@@ -106,7 +116,7 @@ sub extract_epub {
     my $zip = Archive::Zip->new;
     $zip->read( $file );
     $destination = catdir( $destination, basename( $file ) );
-    mkdir $destination if !-d $destination;
+    system 'mkdir', '-p', $destination;
     $zip->extractTree( "", $destination, 'OPS/Image' );
     # This is kinda hacky for now. Should, in the future, look for the images
 }
