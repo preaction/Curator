@@ -188,7 +188,7 @@ sub make_epub {
 
             # Determine if it is an outlier
             # Only ratio appears anywhere near accurate...
-            if ( !$all && !near( $ratio, $avg_ratio, 3*$stddev_ratio ) ) {
+            if ( !$all && !near( $ratio, $avg_ratio, 4*$stddev_ratio ) ) {
                 my $file = basename( $p->{file} );
                 warn "  Outlier (ratio)  $file\n    (w: $p->{width}, h: $p->{height}, r: $p->{ratio})\n    Calc (w: $width, h: $height, r: $ratio)\n    Avg (w: $avg_width, h: $avg_height, r: $avg_ratio )\n    Stddev (w: $stddev_width, h: $stddev_height, r: $stddev_ratio )\n";
                 splice @plan, $i, 1;
