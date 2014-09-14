@@ -2,18 +2,19 @@
 
 use strict;
 use warnings;
+use feature qw( say );
 
 use File::Copy;
 use File::Path;
 use File::Spec;
 use File::Find;
+use IPC::Open3 qw( open3 );
 use File::Basename qw( basename );
 use Getopt::Long;
 
 GetOptions(
     'dvd' => \( my $dvd ),          # Only rip DVDs?
 );
-
 
 # XXX: Signal should stop current rip
 
@@ -37,6 +38,19 @@ select $LOG_FILE; $|++;
 sub print_log(@) {
 	print $LOG_FILE scalar( localtime ), " - $$ - ", @_, "\n";
 }
+
+# -5 -- Decomb if necessary
+# -m -- Add chapter markers
+# -N eng -- Native language
+# --native-dub -- Use native language for audio, not subtitles
+my @HB_ARGS = ( '--preset', $HB_PRESET, '-5', '-m', '-N', 'eng', '--native-dub' );
+
+# --subtitle scan -- Find subtitles used for less than 10% of the time
+#       Except this doesn't appear to actually work for whatever reason
+#       Maybe because the source only has the forced subtitles already
+# -F -- Only use forced subtitles
+# --subtitle-default -- Set the default subtitle
+my @HB_SUBS = ( '--subtitle', '1' );
 
 my $max_depth = $dvd ? 1 : 4;
 # Looking for VIDEO_TS and .avi, .mkv, .mov, .ogg
@@ -179,14 +193,8 @@ sub rip_dvd {
         my $out_file = find_unique_name( "$ENCODE_FOLDER/$dir/${title_number}", ${OUTPUT_FORMAT} );
 
         # Run HandBrakeCLI
-        # -5 -- Decomb if necessary
-        # -F -- show forced subtitles
-        # -N eng -- Native language
-        # --native-dub -- Use native language for audio, not subtitles
-        # --subtitle scan -- Find subtitles used for less than 10% of the time
-        system 'nice', $HANDBRAKE, '--preset', $HB_PRESET, '-5', '-F', '-N', 'eng', 
-                '--native-dub', '--subtitle', 'scan',
-                '-i', $in_file, '-t', $title_number, '-o', $out_file;
+        my @args = ( '-i', $in_file, '-t', $title_number, '-o', $out_file );
+        run_handbrake( @args );
 
         # XXX: Check for failure
     }
@@ -206,13 +214,21 @@ sub rip_file {
     my $out_file = find_unique_name( "$ENCODE_FOLDER/$folder/${out_fn}", $OUTPUT_FORMAT );
 
     # Run HandBrakeCLI
-    # -5 -- Decomb if necessary
-    # -F -- show forced subtitles
-    # -N eng -- Native language
-    # --native-dub -- Use native language for audio, not subtitles
-    # --subtitle scan -- Find subtitles used for less than 10% of the time
-    system 'nice', $HANDBRAKE, '--preset', $HB_PRESET, '-5', '-F', '-N', 'eng', 
-            '--native-dub', '--subtitle', 'scan', '-i', $in_file, '-o', $out_file;
-
+    my @args = ( '-i', $in_file, '-o', $out_file );
+    run_handbrake( @args );
     # XXX: Check for failure
 }
+
+sub run_handbrake {
+    my ( @args ) = @_;
+    # HandBrakeCLI drains STDIN, so let's give it something to drain...
+    # Need bareword filehandles to get open3 to link up STDOUT/STDERR without closing them
+    ## no critic ( 'ProhibitNoWarnings', 'ProhibitBarewordFilehandles' )
+    no warnings 'once';
+    open IN, '<', '/dev/null' or die "Could not open /dev/null: $!";
+    open OUT, '>&STDOUT' or die "Could not dup STDOUT: $!";
+    open ERR, '>&STDERR' or die "Could not dup STDERR: $!";
+    my $pid = open3 '<&IN', '>&OUT', '>&ERR', 'nice', $HANDBRAKE, @HB_ARGS, @HB_SUBS, @args;
+    wait; # waitpid doesn't seem to actually wait for some reason...
+}
+
