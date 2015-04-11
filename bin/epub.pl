@@ -657,18 +657,18 @@ sub add_blank_page {
 
 sub is_image {
     my ( $file ) = @_;
-    return 1 if $file =~ /[.](?:jpe?g|png|gif)$/;
+    return 1 if $file =~ /[.](?:jpe?g|png|gif)$/i;
     return 0;
 }
 
 sub get_media_type {
     my ( $image ) = @_;
-    $image =~ m{[.](jpe?g|png|gif)$};
-    my $type = $1;
-    if ( !$MEDIA_TYPES{ $1 } ) {
-        confess "Unknown media type: $1\n";
+    $image =~ m{[.](jpe?g|png|gif)$}i;
+    my $type = lc $1;
+    if ( !$MEDIA_TYPES{ $type } ) {
+        confess "Unknown media type: $type\n";
     }
-    return $MEDIA_TYPES{ $1 };
+    return $MEDIA_TYPES{ $type };
 }
 
 sub near {
