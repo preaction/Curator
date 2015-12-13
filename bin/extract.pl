@@ -119,7 +119,7 @@ find(
                         say "File: $_" for @files;
                         if ( @files == 1 && $rel_path ) {
                             say "ONLY ONE FILE";
-                            #$ex_dest = $ex_dest->parent;
+                            $ex_dest = $ex_dest->parent;
                         }
 
                         # If there is an archive inside, only extract the archive
