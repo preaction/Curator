@@ -53,8 +53,8 @@ my @HB_ARGS = ( '--preset', $HB_PRESET, '-5', '-m', '-N', 'eng', '--native-dub' 
 my @HB_SUBS = ( '--subtitle', '1' );
 
 my $max_depth = $dvd ? 1 : 4;
-# Looking for VIDEO_TS and .avi, .mkv, .mov, .ogg
-find({ 
+# Looking for VIDEO_TS and .avi, .mkv, .mov, .ogg, .m4v
+find({
     preprocess => sub {
         my $cwd = find_rel_dir( $File::Find::dir );
         my $depth = $cwd =~ tr[/][];
@@ -63,7 +63,7 @@ find({
     },
     wanted => sub {
         my $file = $_;
-        if ( $file =~ /[.](mp4|avi|mkv|mov|ogg|mpg|m?ts|iso)$/i or -d "$file/VIDEO_TS" ) {
+        if ( $file =~ /[.](mp4|avi|mkv|m4v|mov|ogg|mpg|m?ts|iso)$/i or -d "$file/VIDEO_TS" ) {
             if ( -d "$file/VIDEO_TS" || $file =~ /[.]iso$/i ) {
                 rip_dvd( $file, find_rel_dir( $File::Find::dir ) );
             }
