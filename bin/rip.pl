@@ -89,19 +89,6 @@ sub find_rel_dir {
     }
 }
 
-sub wait_for_handbrake {
-    while ( 1 ) {
-        my $process_list = `ps ax`;
-        if ( $process_list !~ /$HANDBRAKE/ ) {
-            last;
-        }
-        else {
-            print_log "$HANDBRAKE already running... sleeping $POLL_INTERVAL seconds";
-            sleep $POLL_INTERVAL;
-        }
-    }
-}
-
 sub find_unique_name {
     my ( $out_file, $format ) = @_;
     if ( -e $out_file . ".${format}") { 
@@ -185,7 +172,6 @@ sub rip_dvd {
     }
 
     for my $title_number ( @titles_to_rip ) {
-        wait_for_handbrake;
 
         print_log "Making $in_file title $title_number... ";
 
@@ -203,7 +189,6 @@ sub rip_dvd {
 sub rip_file {
     my ( $in_file, $folder ) = @_;
 
-    wait_for_handbrake;
     print_log "Making $folder/$in_file... ";
 
     # Remove the original format extension
