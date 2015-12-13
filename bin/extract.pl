@@ -173,7 +173,7 @@ sub extract_rar {
     system 'mkdir', '-p', $destination;
     chdir $destination;
     say "RAR: Extracting $path to $destination";
-    capture { system 'unrar', 'e', $path } and say "--- FAILED: $!";
+    capture { system 'unrar', 'x', $path } and say "--- FAILED: $!";
     chdir $cwd;
 }
 
