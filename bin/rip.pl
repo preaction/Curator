@@ -1,4 +1,5 @@
 #!/usr/bin/perl
+# PODNAME: rip.pl
 
 use strict;
 use warnings;
