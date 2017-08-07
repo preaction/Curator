@@ -36,12 +36,17 @@ sub rename_file {
     my ( $season ) = $info->{ALB} =~ /Season (\d+)/;
     my $show = $info->{ART};
 
-    next unless $title && $show;
+    next unless $title;
 
-    my $name = sprintf '%s/%dx%02d %s.%s', $show, $season, $epnum, $title, $ext;
-
-    my $dir = path( $name )->parent;
-    $dir->mkpath unless $dir->is_dir;
+    my $name;
+    if ( $season ) {
+        $name = sprintf '%s/%dx%02d %s.%s', $show, $season, $epnum, $title, $ext;
+        my $dir = path( $name )->parent;
+        $dir->mkpath unless $dir->is_dir;
+    }
+    else {
+        $name = sprintf '%s.%s', $title, $ext;
+    }
 
     say "$path -> $name";
     $path->move( $name );
