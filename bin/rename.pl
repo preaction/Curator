@@ -4,7 +4,11 @@ use MP4::Info ();
 use Path::Tiny qw( path );
 
 my $FILE_EXT = qr{mp4|m4v}i;
-
+my $DEST_ROOT = path( shift @ARGV );
+die "$DEST_ROOT does not exist" unless $DEST_ROOT->exists;
+if ( !@ARGV ) {
+    unshift @ARGV, $DEST_ROOT;
+}
 walk_paths( @ARGV );
 
 sub walk_paths {
@@ -38,17 +42,21 @@ sub rename_file {
 
     next unless $title;
 
-    my $name;
+    my $move_to;
     if ( $season ) {
-        $name = sprintf '%s/%dx%02d %s.%s', $show, $season, $epnum, $title, $ext;
-        my $dir = path( $name )->parent;
+        $show =~ s/\W+$//;
+        $show =~ s/:/ -/g;
+        my $name = sprintf '%s/%dx%02d %s.%s', $show, $season, $epnum, $title, $ext;
+        $move_to = $DEST_ROOT->child( $name );
+        my $dir = $move_to->parent;
         $dir->mkpath unless $dir->is_dir;
     }
     else {
-        $name = sprintf '%s.%s', $title, $ext;
+        my $name = sprintf '%s.%s', $title, $ext;
+        $move_to = $DEST_ROOT->child( $name );
     }
 
-    say "$path -> $name";
-    $path->move( $name );
+    say "$path -> $move_to";
+    $path->move( $move_to );
 }
 
