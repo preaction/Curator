@@ -25,7 +25,7 @@ my $DVD_TODO  		= File::Spec->tmpdir;
 
 my $MIN_TRACK_TIME	= "10";	# In minutes
 my $HANDBRAKE		= "/Applications/HandBrakeCLI";
-my $HB_PRESET		= q{AppleTV 2};
+my $HB_PRESET		= q{Apple 1080p30 Surround};
 my $OUTPUT_FORMAT	= "m4v";
 
 my $POLL_INTERVAL	= 1200;
