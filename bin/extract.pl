@@ -8,7 +8,6 @@ use File::Basename qw( basename );
 use File::Find;
 use Path::Tiny;
 use IO::CaptureOutput qw( capture );
-use Archive::Rar; # Fuck this module... Make a better one...
 use Archive::Zip; # Fuck this module only slightly less...
 
 $|++;
@@ -96,19 +95,12 @@ find(
                     my $rel_path = find_rel_dir( $File::Find::dir );
                     my $archive = $File::Find::name;
 
-                    say $archive;
-                    say $format;
-                    say $list{ $format };
                     # Figure out the destination
-                    say "rel_path: $rel_path";
-                    say "destination: $destination";
                     my @path_parts = ( $destination );
                     push @path_parts, $rel_path if $rel_path;
                     my $ex_dest = path( @path_parts );
 
                     if ( $list{ $format } ) {
-                        say "HELLO";
-
                         my @files;
                         for my $file ( $list{ $format }->( $archive ) ) {
                             push @files, $file unless grep { $_->( $file ) } values %spam;
@@ -116,9 +108,7 @@ find(
 
                         # If we only have one file inside, don't make all the
                         # directories
-                        say "File: $_" for @files;
                         if ( @files == 1 && $rel_path ) {
-                            say "ONLY ONE FILE";
                             $ex_dest = $ex_dest->parent;
                         }
 
@@ -130,7 +120,6 @@ find(
 
                     }
 
-                    say $ex_dest;
                     #return;
                     $extract{$format}->( $archive, $ex_dest );
                 }
@@ -194,6 +183,7 @@ sub extract_pdf {
 
 sub extract_zip {
     my ( $file, $destination ) = @_;
+    say "ZIP: Extracting $file to $destination";
     my $zip = Archive::Zip->new;
     $zip->read( $file );
     system 'mkdir', '-p', $destination;

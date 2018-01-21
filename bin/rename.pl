@@ -36,6 +36,7 @@ sub rename_file {
     # ; say Dumper $info;
 
     my $title = $info->{TITLE} || $info->{NAM};
+    $title =~ s/:/ -/g;
     my $epnum = $info->{TRACKNUM} || $info->{TRKN}->[0];
     my ( $season ) = $info->{ALB} =~ /Season (\d+)/;
     my $show = $info->{ART};
@@ -53,6 +54,7 @@ sub rename_file {
     }
     else {
         my $name = sprintf '%s.%s', $title, $ext;
+        $name =~ s/:/ -/g;
         $move_to = $DEST_ROOT->child( $name );
     }
 

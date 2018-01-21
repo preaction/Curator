@@ -212,8 +212,8 @@ sub run_handbrake {
     ## no critic ( 'ProhibitNoWarnings', 'ProhibitBarewordFilehandles' )
     no warnings 'once';
     open IN, '<', '/dev/null' or die "Could not open /dev/null: $!";
-    open OUT, '>&STDOUT' or die "Could not dup STDOUT: $!";
-    open ERR, '>&STDERR' or die "Could not dup STDERR: $!";
+    open OUT, '>/dev/null' or die "Could not dup /dev/null: $!";
+    open ERR, '>/dev/null' or die "Could not dup /dev/null: $!";
     my $pid = open3 '<&IN', '>&OUT', '>&ERR', 'nice', $HANDBRAKE, @HB_ARGS, @HB_SUBS, @args;
     wait; # waitpid doesn't seem to actually wait for some reason...
 }
