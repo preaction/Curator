@@ -8,7 +8,7 @@ use Net::Address::IP::Local;
 use Mojo::Cookie::Response;
 use Mojo::File qw( path );
 use YAML;
-use List::Util qw( maxstr );
+use List::Util qw( minstr );
 
 my $UAID = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.1 Safari/603.1.30';
 my $state_file = path( $Bin )->sibling( var => 'fetch-state.yml' );
@@ -104,9 +104,9 @@ for my $item ( @found_items ) {
                 next;
             }
 
-            my $last_ep = maxstr keys $state->{episodes}{ $rule->{name} }->%*;
-            if ( $ep lt $last_ep ) {
-                say "\tEpisode older than $last_ep. Skipping.";
+            my $first_ep = minstr keys $state->{episodes}{ $rule->{name} }->%*;
+            if ( $ep lt $first_ep ) {
+                say "\tEpisode older than first episode downloaded ($first_ep). Skipping.";
                 next;
             }
             elsif ( !$state->{episodes}{ $rule->{name} }{ $ep } ) {
