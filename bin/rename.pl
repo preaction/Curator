@@ -45,7 +45,7 @@ sub rename_file {
 
     my $move_to;
     if ( $season ) {
-        $show =~ s/\W+$//;
+        $show =~ s/\s+$//;
         $show =~ s/:/ -/g;
         my $name = sprintf '%s/%dx%02d %s.%s', $show, $season, $epnum, $title, $ext;
         $move_to = $DEST_ROOT->child( $name );
