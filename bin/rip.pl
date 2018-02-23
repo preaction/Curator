@@ -12,6 +12,7 @@ use File::Find;
 use IPC::Open3 qw( open3 );
 use File::Basename qw( basename );
 use Getopt::Long;
+use FindBin qw( $Bin );
 
 GetOptions(
     'dvd' => \( my $dvd ),          # Only rip DVDs?
@@ -34,7 +35,7 @@ my $TV_MIN_EPS		= 2; # Minimum number of eps per disk
 
 my $FORCE_TV = 0; # Force TV mode. Rip a bunch of things.
 
-open my $LOG_FILE, ">>", "$ENV{HOME}/Movies/drivetrain.log" or die "Couldn't open logfile! $!\n";
+open my $LOG_FILE, ">>", "$Bin/../var/log/rip.log" or die "Couldn't open logfile! $!\n";
 select $LOG_FILE; $|++;
 sub print_log(@) {
 	print $LOG_FILE scalar( localtime ), " - $$ - ", @_, "\n";
