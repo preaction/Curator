@@ -13,6 +13,7 @@ use IPC::Open3 qw( open3 );
 use File::Basename qw( basename );
 use Getopt::Long;
 use FindBin qw( $Bin );
+use Cwd qw( abs_path );
 
 GetOptions(
     'dvd' => \( my $dvd ),          # Only rip DVDs?
@@ -20,7 +21,7 @@ GetOptions(
 
 # XXX: Signal should stop current rip
 
-my $ENCODE_FOLDER	= shift @ARGV;
+my $ENCODE_FOLDER	= abs_path( shift @ARGV );
 my @dirs = @ARGV ? @ARGV : ( "/Volumes" );
 my $DVD_TODO  		= File::Spec->tmpdir;
 
