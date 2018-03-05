@@ -59,12 +59,15 @@ TORRENT: for my $file ( @torrents ) {
 
     #; say Dumper \@files;
     if ( any { !-e } @files ) {
-        ; say "Not finished: $file";
+        ; say "Not finished: $basename ($file)";
         #; say "Files missing: " . join "\n", grep { !-e } @files;
         #; say "Files avail: " . join "\n", grep { -e } @files;
         if ( $opt{done} && all { !-e } @files ) {
             ; say "All files missing, assuming deleted";
             update_state( $basename, "deleted" );
+        }
+        else {
+            update_state( $basename, "downloading" );
         }
         next TORRENT;
     }
