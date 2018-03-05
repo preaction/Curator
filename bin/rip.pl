@@ -76,7 +76,7 @@ find({
             }
             if ( -d "$file/VIDEO_TS" ) {
                 print_log "Done, ejecting volume";
-                `diskutil eject "$File::Find::name"`;
+                print_log `diskutil eject "$File::Find::name" 2>&1`;
             }
         }
     },
