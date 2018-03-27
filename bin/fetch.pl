@@ -152,7 +152,7 @@ for my $item ( @found_items ) {
 
     if ( $want ) {
         say "\tDownloading...";
-        my $tx = $ua->get( $url );
+        my $tx = $ua->get( $host . $url );
         my $name = $tx->req->url->path->parts->[-1];
         my $dest = $torrents_dir->child( $name );
         $tx->result->content->asset->move_to( $dest );
