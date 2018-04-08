@@ -5,24 +5,21 @@ use open ':encoding(utf8)';
 use FindBin qw( $Bin );
 use Mojo::UserAgent;
 use Net::Address::IP::Local;
-use Mojo::Cookie::Response;
+use Mojo::URL;
 use Mojo::File qw( path );
 use YAML;
 use List::Util qw( minstr );
 
-my $UAID = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/603.1.30 (KHTML, like Gecko) Version/10.1 Safari/603.1.30';
+my $UAID = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/11.1 Safari/605.1.15';
 my $state_file = path( $Bin )->sibling( var => 'fetch-state.yml' );
 my $state = -f $state_file ? YAML::LoadFile( "$state_file" ) : {};
-my $host = 'https://www.torrentleech.org';
-my $root = $host . '/torrents/browse/index/page/';
-my $cookies_file = path( $Bin )->sibling( var => 'fetch-cookies.yml' );
+my $config_file = path( $Bin )->sibling( etc => 'fetch.yml' );
+my $config = YAML::LoadFile( "$config_file" );
+my $url = $config->{url};
 my $torrents_dir = path( $Bin )->sibling( var => 'torrent' );
 my $rules_file = path( $Bin )->sibling( etc => 'rules.yml' );
 my @rules = -f $rules_file ? YAML::LoadFile( "$rules_file" ) : ();
 my $torrent_server = "sadie.local:~/Downloads";
-
-my $start_page = 1;
-my $max_page = 50;
 
 my $ua = Mojo::UserAgent->new(
     # Force Mojolicious to use IPv4
@@ -30,56 +27,28 @@ my $ua = Mojo::UserAgent->new(
 );
 $ua->transactor->name( $UAID );
 
-if ( -f $cookies_file ) {
-    say STDERR "-- Using saved session cookies...";
-    my @cookies = YAML::LoadFile( "$cookies_file" );
-    $ua->cookie_jar->add( @cookies );
-}
-else {
-    say STDERR "-- Logging in...";
-    login( $ua );
-}
-
 my $first_id;
 my @found_items;
 
-PAGE:
-for my $page ( $start_page .. $max_page ) {
-    my $tx = $ua->get( $root . $page );
-    my $tbody = $tx->res->dom->at( '#torrenttable tbody' );
+my $tx = $ua->get( $url );
+for my $item ( $tx->res->dom->find( 'channel > item' )->each ) {
+    my $guid = Mojo::URL->new( $item->at( 'guid' )->text );
+    my $id = $guid->path->[-1];
 
-    if ( !$tbody ) {
-        use Data::Dumper;
-        warn "Could not find table body: " . $tx->res->body . " (" . Dumper( $tx->res->error ) . ")";
-        if ( $tx->res->dom->at( '[action="/user/account/login/"]' ) ) {
-            say "Found login form, logging in...";
-            login( $ua );
-            redo;
-        }
-        else {
-            die "No table body and no login form found";
-        }
+    if ( !$first_id ) {
+        $first_id = $id;
+    }
+    if ( $id <= $state->{last_id} ) {
+        last;
     }
 
-    ROW:
-    for my $row ( $tbody->find( 'tr' )->each ) {
-        my $id = $row->attr( 'id' );
+    my $title = $item->at( 'title' )->text;
+    my $url = $item->at( 'link' )->text;
 
-        if ( !$first_id ) {
-            $first_id = $id;
-        }
-        if ( $id <= $state->{last_id} ) {
-            last PAGE;
-        }
-
-        my $title = $row->at( 'td.name .title' )->all_text;
-        my $url = $row->at( 'td.quickdownload a' )->attr( 'href' );
-
-        unshift @found_items, { id => $id, title => $title, url => $url };
-    }
+    push @found_items, { id => $id, title => $title, url => $url };
 }
 
-for my $item ( @found_items ) {
+for my $item ( reverse @found_items ) {
     my ( $id, $title, $url ) = @{ $item }{qw( id title url )};
     say "[$id] $title\n\t$url";
 
@@ -152,7 +121,7 @@ for my $item ( @found_items ) {
 
     if ( $want ) {
         say "\tDownloading...";
-        my $tx = $ua->get( $host . $url );
+        my $tx = $ua->get( $url );
         my $name = $tx->req->url->path->parts->[-1];
         my $dest = $torrents_dir->child( $name );
         $tx->result->content->asset->move_to( $dest );
@@ -172,8 +141,3 @@ for my $item ( @found_items ) {
 $state->{last_id} = $first_id;
 YAML::DumpFile( "$state_file", $state );
 
-sub login {
-    my $tx = $ua->post( $host . '/user/account/login/', form => { username => 'preaction', password => '26220b0b%' } );
-    my $cookies = $ua->cookie_jar->all;
-    YAML::DumpFile( $cookies_file, @$cookies );
-}
