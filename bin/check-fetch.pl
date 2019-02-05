@@ -33,6 +33,10 @@ TORRENT: for my $file ( @torrents ) {
         say "Can't parse $file: $@";
         next;
     }
+    if ( !$data->{info} ) {
+        ; say "Torrent file has no {info} section!";
+        next TORRENT;
+    }
 
     $basename = $data->{info}{name} || $basename;
     next if $state->{ $basename } && $state->{ $basename } =~ /transcoded|deleted/;
@@ -58,8 +62,9 @@ TORRENT: for my $file ( @torrents ) {
     }
 
     #; say Dumper \@files;
-    if ( any { !-e } @files ) {
+    if ( my @files = grep { !-e } @files ) {
         ; say "Not finished: $basename ($file)";
+        ; say "\tMissing: $_" for @files;
         #; say "Files missing: " . join "\n", grep { !-e } @files;
         #; say "Files avail: " . join "\n", grep { -e } @files;
         if ( $opt{done} && all { !-e } @files ) {
