@@ -44,16 +44,18 @@ sub print_log(@) {
 
 # -5 -- Decomb if necessary
 # -m -- Add chapter markers
+my @HB_ARGS = ( '--preset', $HB_PRESET, '-5', '-m' );
+
 # -N eng -- Native language
 # --native-dub -- Use native language for audio, not subtitles
-my @HB_ARGS = ( '--preset', $HB_PRESET, '-5', '-m', '-N', 'eng', '--native-dub' );
+my @HB_NATIVE = ( '-N', 'eng', '--native-dub' );
 
 # --subtitle scan -- Find subtitles used for less than 10% of the time
 #       Except this doesn't appear to actually work for whatever reason
 #       Maybe because the source only has the forced subtitles already
 # -F -- Only use forced subtitles
 # --subtitle-default -- Set the default subtitle
-my @HB_SUBS = ( '--subtitle', '1' );
+my @HB_SUBS = ( '--subtitle', 'scan', '-F' );
 
 my $max_depth = $dvd ? 1 : 4;
 # Looking for VIDEO_TS and .avi, .mkv, .mov, .ogg, .m4v
@@ -105,6 +107,15 @@ sub find_unique_name {
     return "${out_file}.${format}";
 }
 
+sub get_title_info {
+    my ( $canon_path ) = @_;
+    my $title_info = `$HANDBRAKE -i "${canon_path}" -t 0 2>&1`;
+    if ( $? ) {
+        print_log "Problem running $HANDBRAKE: $?";
+    }
+    return $title_info;
+}
+
 sub rip_dvd {
     my ( $in_file, $dir ) = @_;
     my $canon_path;
@@ -117,10 +128,7 @@ sub rip_dvd {
 
     # Find all titles we want
     print_log "Discovering title information";
-    my $title_info = `$HANDBRAKE -i "${canon_path}" -t 0 2>&1`;
-    if ( $? ) {
-        print_log "Problem running $HANDBRAKE: $?";
-    }
+    my $title_info = get_title_info( $canon_path ) || return;
 
     # TV: 3-8 titles within 3-4 minutes of each other, and 
     #     maybe one title with all the other titles
@@ -201,14 +209,67 @@ sub rip_file {
     `mkdir -p "$ENCODE_FOLDER/$folder"`;
     my $out_file = find_unique_name( "$ENCODE_FOLDER/$folder/${out_fn}", $OUTPUT_FORMAT );
 
+    # Scan the title to find out if we need to add subtitle arguments
+    my $title_info = get_title_info( $in_file );
+    my @lines = split /\n/, $title_info;
+    my %audio;
+    my $in_audio = 0;
+
+    for my $line ( @lines ) {
+        if ( !$in_audio ) {
+            # Look for the first "  + audio tracks:" line
+            $in_audio = $line =~ /\s{2}\+\s+audio tracks:/;
+            next;
+        }
+
+        # ... and keep looking until there are less than 4 spaces
+        $in_audio = $line =~ /\s{4}\+/;
+        last if !$in_audio;
+
+        my ( $no, $lang, $code ) = $line =~ /(\d+), (\S+).+\(iso639-2: (\w+)\)/;
+        $audio{ $code } = $no;
+    }
+    #print_log( "Found audio: " . join ", ", sort { $audio{$a} <=> $audio{$b} } keys %audio );
+
+    my %subtitle;
+    my $in_subtitle = 0;
+    for my $line ( @lines ) {
+        if ( !$in_subtitle ) {
+            # Look for the first "  + subtitle tracks:" line
+            $in_subtitle = $line =~ /\s{2}\+\s+subtitle tracks:/;
+            next;
+        }
+
+        # ... and keep looking until there are less than 4 spaces
+        $in_subtitle = $line =~ /\s{4}\+/;
+        last if !$in_subtitle;
+
+        my ( $no, $lang, $code ) = $line =~ /(\d+), (\S+).+\(iso639-2: (\w+)\)/;
+        $subtitle{ $code } = $no;
+    }
+
     # Run HandBrakeCLI
     my @args = ( '-i', $in_file, '-o', $out_file );
+    if ( $audio{ und } && !$audio{ eng } ) {
+        print_log(
+            sprintf "No English audio. Unknown audio track: %s; Unknown subtitle track: %s",
+            $audio{und}//'', $subtitle{und}//'',
+        );
+        push @args, '--subtitle', join ',', grep { defined } $subtitle{und}, $subtitle{eng};
+    }
+    else {
+        my @audio_langs = sort { $audio{ $a } <=> $audio{ $b } } keys %audio;
+        my @subtitle_langs = sort { $subtitle{ $a } <=> $subtitle{ $b } } keys %subtitle;
+        print_log( "Adding native language option. Audio langs: @audio_langs; Subtitle langs: @subtitle_langs" );
+        push @args, @HB_NATIVE;
+    }
     run_handbrake( @args );
     # XXX: Check for failure
 }
 
 sub run_handbrake {
     my ( @args ) = @_;
+
     # HandBrakeCLI drains STDIN, so let's give it something to drain...
     # Need bareword filehandles to get open3 to link up STDOUT/STDERR without closing them
     ## no critic ( 'ProhibitNoWarnings', 'ProhibitBarewordFilehandles' )
