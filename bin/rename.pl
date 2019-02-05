@@ -37,6 +37,7 @@ sub rename_file {
 
     my $title = $info->{TITLE} || $info->{NAM};
     $title =~ s/:/ -/g;
+    $title =~ s{/}{-}g;
     my $epnum = $info->{TRACKNUM} || $info->{TRKN}->[0];
     my ( $season ) = $info->{ALB} =~ /Season (\d+)/;
     my $show = ucfirst $info->{ART};
