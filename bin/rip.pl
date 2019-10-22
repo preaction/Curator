@@ -245,6 +245,7 @@ sub rip_file {
         last if !$in_subtitle;
 
         my ( $no, $lang, $code ) = $line =~ /(\d+), (\S+).+\(iso639-2: (\w+)\)/;
+        next if !$code;
         $subtitle{ $code } = $no;
     }
 
