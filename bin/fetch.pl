@@ -19,7 +19,7 @@ my $url = $config->{url};
 my $torrents_dir = path( $Bin )->sibling( var => 'torrent' );
 my $rules_file = path( $Bin )->sibling( etc => 'rules.yml' );
 my @rules = -f $rules_file ? YAML::LoadFile( "$rules_file" ) : ();
-my $torrent_server = "sadie.local:~/Downloads";
+my $torrent_server = "old-mini.local:~/Downloads";
 
 my $ua = Mojo::UserAgent->new(
     # Force Mojolicious to use IPv4
@@ -125,10 +125,10 @@ for my $item ( reverse @found_items ) {
         my $name = $tx->req->url->path->parts->[-1];
         my $dest = $torrents_dir->child( $name );
         $tx->result->content->asset->move_to( $dest );
-        say "\tCopying to Sadie...";
+        say "\tCopying to old-mini...";
         my $exit = system( "scp", "$dest", $torrent_server );
         if ( $exit ) {
-            say "\tUnable to copy to sadie";
+            say "\tUnable to copy to old-mini";
         }
     }
     else {
